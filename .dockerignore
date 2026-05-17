@@ -1,0 +1,15 @@
+# Pastas de compilação locais do .NET
+**/bin/
+**/obj/
+
+# Pastas de IDE e versionamento
+.git/
+.vs/
+.idea/
+.vscode/
+
+# Arquivos de usuário e ambiente local
+*/.user
+*/.suo
+.env
+appsettings.Development.json

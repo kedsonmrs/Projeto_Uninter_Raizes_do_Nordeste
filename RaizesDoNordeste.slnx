@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="RaizesDoNordeste.API/RaizesDoNordeste.API.csproj" />
+  <Project Path="RaizesDoNordeste.Application/RaizesDoNordeste.Application.csproj" />
+  <Project Path="RaizesDoNordeste.Domain/RaizesDoNordeste.Domain.csproj" />
+  <Project Path="RaizesDoNordeste.Infra/RaizesDoNordeste.Infrastructure.csproj" />
+</Solution>
