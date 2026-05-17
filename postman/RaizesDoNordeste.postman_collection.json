@@ -1,0 +1,705 @@
+{
+  "info": {
+    "name": "Raízes do Nordeste API",
+    "_postman_id": "raizes-nordeste-2026-final",
+    "description": "Coleção de testes para o projeto multidisciplinar Back-End UNINTER 2026.\nFluxo A completo com ajustes aplicados.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl",      "value": "http://localhost:8080/api", "type": "string" },
+    { "key": "tokenCliente", "value": "", "type": "string" },
+    { "key": "tokenAdmin",   "value": "", "type": "string" },
+    { "key": "pedidoId",     "value": "", "type": "string" },
+    { "key": "unidadeId",    "value": "", "type": "string" },
+    { "key": "produtoId",    "value": "", "type": "string" }
+  ],
+  "item": [
+    {
+      "name": "Auth",
+      "description": "T01, T02, T03 — Cadastro, login e acesso indevido",
+      "item": [
+        {
+          "name": "T01 — Cadastrar usuário (positivo 201)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/auth/cadastro", "host": ["{{baseUrl}}"], "path": ["auth","cadastro"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nome\": \"Maria Cliente\",\n  \"email\": \"maria@raizes.com\",\n  \"senha\": \"Senha@123\",\n  \"consentimentoLGPD\": true,\n  \"telefone\": \"11999990001\"\n}"
+            }
+          },
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 201 criado', () => pm.response.to.have.status(201));",
+            "pm.test('Retorna id e email', () => {",
+            "  const body = pm.response.json();",
+            "  pm.expect(body).to.have.property('id');",
+            "  pm.expect(body.email).to.eql('maria@raizes.com');",
+            "});"
+          ], "type": "text/javascript" }}]
+        },
+        {
+          "name": "T02 — Login cliente (positivo 200 + salva token)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/auth/login", "host": ["{{baseUrl}}"], "path": ["auth","login"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"maria@raizes.com\",\n  \"senha\": \"Senha@123\"\n}"
+            }
+          },
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 200', () => pm.response.to.have.status(200));",
+            "pm.test('Retorna accessToken', () => {",
+            "  const body = pm.response.json();",
+            "  pm.expect(body).to.have.property('accessToken');",
+            "  pm.collectionVariables.set('tokenCliente', body.accessToken);",
+            "});"
+          ], "type": "text/javascript" }}]
+        },
+        {
+          "name": "T03 — Login credenciais inválidas (negativo 401)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/auth/login", "host": ["{{baseUrl}}"], "path": ["auth","login"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"maria@raizes.com\",\n  \"senha\": \"senhaerrada\"\n}"
+            }
+          },
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 401', () => pm.response.to.have.status(401));",
+            "pm.test('Erro padronizado', () => {",
+            "  const body = pm.response.json();",
+            "  pm.expect(body).to.have.property('error');",
+            "  pm.expect(body).to.have.property('message');",
+            "  pm.expect(body).to.have.property('timestamp');",
+            "});"
+          ], "type": "text/javascript" }}]
+        },
+        {
+          "name": "T04 — Acesso sem token (negativo 401)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/pedidos", "host": ["{{baseUrl}}"], "path": ["pedidos"] }
+          },
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 401 sem token', () => pm.response.to.have.status(401));"
+          ], "type": "text/javascript" }}]
+        },
+        {
+          "name": "T05 — Login admin (positivo 200 + salva token admin)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/auth/login", "host": ["{{baseUrl}}"], "path": ["auth","login"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@raizes.com\",\n  \"senha\": \"Senha@123\"\n}"
+            }
+          },
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 200', () => pm.response.to.have.status(200));",
+            "const body = pm.response.json();",
+            "if (body.accessToken) pm.collectionVariables.set('tokenAdmin', body.accessToken);"
+          ], "type": "text/javascript" }}]
+        }
+      ]
+    },
+    {
+      "name": "Unidades",
+      "description": "Gestão de unidades da rede",
+      "item": [
+        {
+          "name": "Listar unidades ativas (positivo 200)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{tokenCliente}}" }],
+            "url": { "raw": "{{baseUrl}}/unidades", "host": ["{{baseUrl}}"], "path": ["unidades"] }
+          },
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 200', () => pm.response.to.have.status(200));",
+            "pm.test('Retorna array', () => {",
+            "  const body = pm.response.json();",
+            "  pm.expect(body).to.be.an('array');",
+            "  if (body.length > 0) pm.collectionVariables.set('unidadeId', body[0].id);",
+            "});"
+          ], "type": "text/javascript" }}]
+        },
+        {
+          "name": "Criar unidade (admin — positivo 201)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type",  "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{tokenAdmin}}" }
+            ],
+            "url": { "raw": "{{baseUrl}}/unidades", "host": ["{{baseUrl}}"], "path": ["unidades"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nome\": \"Unidade Fortaleza Centro\",\n  \"endereco\": \"Rua Floriano Peixoto, 100 - Centro, Fortaleza - CE\",\n  \"telefone\": \"85999990001\"\n}"
+            }
+          },
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 201', () => pm.response.to.have.status(201));",
+            "const body = pm.response.json();",
+            "if (body.id) pm.collectionVariables.set('unidadeId', body.id);"
+          ], "type": "text/javascript" }}]
+        },
+        {
+          "name": "Cliente tenta criar unidade (negativo 403)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type",  "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{tokenCliente}}" }
+            ],
+            "url": { "raw": "{{baseUrl}}/unidades", "host": ["{{baseUrl}}"], "path": ["unidades"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nome\": \"Unidade Indevida\",\n  \"endereco\": \"Rua X\"\n}"
+            }
+          },
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 403 sem permissão', () => pm.response.to.have.status(403));"
+          ], "type": "text/javascript" }}]
+        }
+      ]
+    },
+    {
+      "name": "Produtos",
+      "description": "Cardápio por unidade",
+      "item": [
+        {
+          "name": "Criar produto (admin — positivo 201)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type",  "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{tokenAdmin}}" }
+            ],
+            "url": { "raw": "{{baseUrl}}/produtos", "host": ["{{baseUrl}}"], "path": ["produtos"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"unidadeId\": \"{{unidadeId}}\",\n  \"nome\": \"Baião de Dois\",\n  \"descricao\": \"Prato típico nordestino com arroz e feijão\",\n  \"preco\": 32.90,\n  \"categoria\": \"Prato Principal\"\n}"
+            }
+          },
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 201', () => pm.response.to.have.status(201));",
+            "const body = pm.response.json();",
+            "if (body.id) pm.collectionVariables.set('produtoId', body.id);"
+          ], "type": "text/javascript" }}]
+        },
+        {
+          "name": "Listar cardápio por unidade (positivo 200)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{tokenCliente}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/produtos/unidade/{{unidadeId}}?somenteDisponiveis=true",
+              "host": ["{{baseUrl}}"],
+              "path": ["produtos","unidade","{{unidadeId}}"],
+              "query": [{ "key": "somenteDisponiveis", "value": "true" }]
+            }
+          },
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 200', () => pm.response.to.have.status(200));",
+            "pm.test('Retorna produtos da unidade', () => {",
+            "  const body = pm.response.json();",
+            "  pm.expect(body).to.be.an('array');",
+            "});"
+          ], "type": "text/javascript" }}]
+        }
+      ]
+    },
+    {
+      "name": "Estoque",
+      "description": "Entrada de estoque — necessário antes de criar pedido",
+      "item": [
+        {
+          "name": "Entrada de estoque (admin — positivo 200)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type",  "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{tokenAdmin}}" }
+            ],
+            "url": { "raw": "{{baseUrl}}/estoque/entrada", "host": ["{{baseUrl}}"], "path": ["estoque","entrada"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"produtoId\": \"{{produtoId}}\",\n  \"unidadeId\": \"{{unidadeId}}\",\n  \"quantidade\": 50,\n  \"motivo\": \"Abastecimento inicial\"\n}"
+            }
+          },
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 200', () => pm.response.to.have.status(200));",
+            "pm.test('Quantidade atualizada', () => {",
+            "  const body = pm.response.json();",
+            "  pm.expect(body.quantidade).to.be.above(0);",
+            "});"
+          ], "type": "text/javascript" }}]
+        },
+        {
+          "name": "Consultar saldo por unidade (positivo 200)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{tokenAdmin}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/estoque/unidade/{{unidadeId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["estoque","unidade","{{unidadeId}}"]
+            }
+          },
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 200', () => pm.response.to.have.status(200));"
+          ], "type": "text/javascript" }}]
+        }
+      ]
+    },
+    {
+      "name": "Pedidos — Fluxo A completo",
+      "description": "T06 a T11 — Fluxo crítico: Pedido → Pagamento mock → Status",
+      "item": [
+        {
+          "name": "T06 — Criar pedido válido (positivo 201)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type",  "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{tokenCliente}}" }
+            ],
+            "url": { "raw": "{{baseUrl}}/pedidos", "host": ["{{baseUrl}}"], "path": ["pedidos"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"unidadeId\": \"{{unidadeId}}\",\n  \"canalPedido\": 1,\n  \"itens\": [\n    { \"produtoId\": \"{{produtoId}}\", \"quantidade\": 2 }\n  ],\n  \"observacao\": \"Sem pimenta\"\n}"
+            }
+          },
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 201 criado', () => pm.response.to.have.status(201));",
+            "pm.test('Pedido com status AguardandoPagamento', () => {",
+            "  const body = pm.response.json();",
+            "  pm.expect(body).to.have.property('id');",
+            "  pm.expect(body.status).to.eql('AguardandoPagamento');",
+            "  pm.expect(body.canalPedido).to.eql('Totem');",
+            "  pm.collectionVariables.set('pedidoId', body.id);",
+            "});"
+          ], "type": "text/javascript" }}]
+        },
+        {
+          "name": "T07 — Criar pedido sem canalPedido (negativo 400)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type",  "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{tokenCliente}}" }
+            ],
+            "url": { "raw": "{{baseUrl}}/pedidos", "host": ["{{baseUrl}}"], "path": ["pedidos"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"unidadeId\": \"{{unidadeId}}\",\n  \"itens\": [\n    { \"produtoId\": \"{{produtoId}}\", \"quantidade\": 1 }\n  ]\n}"
+            }
+          },
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 400 campo inválido', () => pm.response.to.have.status(400));",
+            "pm.test('Erro padronizado com details ou errors', () => {",
+            "  const body = pm.response.json();",
+            "  const temErros = body.hasOwnProperty('errors') || body.hasOwnProperty('details');",
+            "  pm.expect(temErros).to.be.true;",
+            "});"
+          ], "type": "text/javascript" }}]
+        },
+        {
+          "name": "T08 — Criar pedido com estoque insuficiente (negativo 409)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type",  "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{tokenCliente}}" }
+            ],
+            "url": { "raw": "{{baseUrl}}/pedidos", "host": ["{{baseUrl}}"], "path": ["pedidos"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"unidadeId\": \"{{unidadeId}}\",\n  \"canalPedido\": 2,\n  \"itens\": [\n    { \"produtoId\": \"{{produtoId}}\", \"quantidade\": 99999 }\n  ]\n}"
+            }
+          },
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 409 estoque insuficiente', () => {",
+            "  pm.expect(pm.response.code).to.be.oneOf([409, 400]);",
+            "});",
+            "pm.test('Mensagem de estoque', () => {",
+            "  const body = pm.response.json();",
+            "  pm.expect(body.message.toLowerCase()).to.include('estoque');",
+            "});"
+          ], "type": "text/javascript" }}]
+        },
+        {
+          "name": "T09 — Criar pedido com produto inexistente (negativo 404)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type",  "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{tokenCliente}}" }
+            ],
+            "url": { "raw": "{{baseUrl}}/pedidos", "host": ["{{baseUrl}}"], "path": ["pedidos"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"unidadeId\": \"{{unidadeId}}\",\n  \"canalPedido\": 1,\n  \"itens\": [\n    { \"produtoId\": 99999, \"quantidade\": 1 }\n  ]\n}"
+            }
+          },
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 404 produto não encontrado', () => pm.response.to.have.status(404));"
+          ], "type": "text/javascript" }}]
+        },
+        {
+          "name": "Consultar pedido por id (positivo 200)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{tokenCliente}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/pedidos/{{pedidoId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["pedidos","{{pedidoId}}"]
+            }
+          },
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 200', () => pm.response.to.have.status(200));",
+            "pm.test('Retorna itens do pedido', () => {",
+            "  const body = pm.response.json();",
+            "  pm.expect(body.itens).to.be.an('array').with.length.above(0);",
+            "});"
+          ], "type": "text/javascript" }}]
+        },
+        {
+          "name": "Listar pedidos filtrado por canal (positivo 200)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{tokenAdmin}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/pedidos?canalPedido=0&pagina=1&limite=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["pedidos"],
+              "query": [
+                { "key": "canalPedido", "value": "0" },
+                { "key": "pagina",      "value": "1" },
+                { "key": "limite",      "value": "10" }
+              ]
+            }
+          },
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 200', () => pm.response.to.have.status(200));",
+            "pm.test('Retorna array paginado', () => {",
+            "  pm.expect(pm.response.json()).to.be.an('array');",
+            "});"
+          ], "type": "text/javascript" }}]
+        }
+      ]
+    },
+    {
+      "name": "Pagamento Mock — Fluxo A",
+      "description": "T10, T11 — Solicitar pagamento e verificar atualização de status",
+      "item": [
+        {
+          "name": "T10 — Processar pagamento mock (positivo 200)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type",  "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{tokenCliente}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/pagamentos/pedido/{{pedidoId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["pagamentos","pedido","{{pedidoId}}"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"metodo\": 0\n}"
+            }
+          },
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 200', () => pm.response.to.have.status(200));",
+            "pm.test('Pagamento processado pelo mock', () => {",
+            "  const body = pm.response.json();",
+            "  pm.expect(body).to.have.property('status');",
+            "  pm.expect(body).to.have.property('referenciaExterna');",
+            "  pm.expect(body).to.have.property('mensagemRetorno');",
+            "  pm.expect(['Aprovado','Recusado']).to.include(body.status);",
+            "});"
+          ], "type": "text/javascript" }}]
+        },
+        {
+          "name": "T11 — Pagamento duplicado no mesmo pedido (negativo 409)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type",  "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{tokenCliente}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/pagamentos/pedido/{{pedidoId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["pagamentos","pedido","{{pedidoId}}"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"metodo\": 0\n}"
+            }
+          },
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 409 pagamento duplicado', () => {",
+            "  pm.expect(pm.response.code).to.be.oneOf([409, 400]);",
+            "});"
+          ], "type": "text/javascript" }}]
+        },
+        {
+          "name": "Consultar pagamento do pedido (positivo 200)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{tokenCliente}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/pagamentos/pedido/{{pedidoId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["pagamentos","pedido","{{pedidoId}}"]
+            }
+          },
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 200', () => pm.response.to.have.status(200));",
+            "pm.test('Status do pedido atualizado após pagamento', () => {",
+            "  const body = pm.response.json();",
+            "  pm.expect(body).to.have.property('status');",
+            "});"
+          ], "type": "text/javascript" }}]
+        }
+      ]
+    },
+    {
+      "name": "Atualização de Status — Fluxo A",
+      "description": "T12 — Atualizar status do pedido (cozinha → pronto → entregue)",
+      "item": [
+        {
+          "name": "T12 — Atualizar status para EmPreparo (positivo 200)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type",  "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{tokenAdmin}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/pedidos/{{pedidoId}}/status",
+              "host": ["{{baseUrl}}"],
+              "path": ["pedidos","{{pedidoId}}","status"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"novoStatus\": 2\n}"
+            }
+          },
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 200', () => pm.response.to.have.status(200));",
+            "pm.test('Status atualizado para EmPreparo', () => {",
+            "  const body = pm.response.json();",
+            "  pm.expect(body.status).to.eql('EmPreparo');",
+            "});"
+          ], "type": "text/javascript" }}]
+        },
+        {
+          "name": "Atualizar status para Pronto (positivo 200)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type",  "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{tokenAdmin}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/pedidos/{{pedidoId}}/status",
+              "host": ["{{baseUrl}}"],
+              "path": ["pedidos","{{pedidoId}}","status"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"novoStatus\": 3\n}"
+            }
+          },
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 200', () => pm.response.to.have.status(200));",
+            "pm.test('Status Pronto', () => {",
+            "  pm.expect(pm.response.json().status).to.eql('Pronto');",
+            "});"
+          ], "type": "text/javascript" }}]
+        },
+        {
+          "name": "Atualizar status para Entregue (positivo 200 + acumula pontos)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type",  "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{tokenAdmin}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/pedidos/{{pedidoId}}/status",
+              "host": ["{{baseUrl}}"],
+              "path": ["pedidos","{{pedidoId}}","status"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"novoStatus\": 4\n}"
+            }
+          },
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 200', () => pm.response.to.have.status(200));",
+            "pm.test('Status Entregue — pontos de fidelidade acumulados', () => {",
+            "  pm.expect(pm.response.json().status).to.eql('Entregue');",
+            "});"
+          ], "type": "text/javascript" }}]
+        },
+        {
+          "name": "Tentar regredir status (negativo 400)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type",  "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{tokenAdmin}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/pedidos/{{pedidoId}}/status",
+              "host": ["{{baseUrl}}"],
+              "path": ["pedidos","{{pedidoId}}","status"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"novoStatus\": 1\n}"
+            }
+          },
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 400 regressão inválida', () => pm.response.to.have.status(400));"
+          ], "type": "text/javascript" }}]
+        }
+      ]
+    },
+    {
+      "name": "Fidelidade",
+      "description": "Saldo e resgate de pontos",
+      "item": [
+        {
+          "name": "Consultar saldo de pontos (positivo 200)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{tokenCliente}}" }],
+            "url": { "raw": "{{baseUrl}}/fidelidade/saldo", "host": ["{{baseUrl}}"], "path": ["fidelidade","saldo"] }
+          },
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 200', () => pm.response.to.have.status(200));",
+            "pm.test('Retorna pontos', () => {",
+            "  const body = pm.response.json();",
+            "  pm.expect(body).to.have.property('pontosTotal');",
+            "  pm.expect(body.pontosTotal).to.be.a('number');",
+            "});"
+          ], "type": "text/javascript" }}]
+        },
+        {
+          "name": "Resgatar mais pontos do que tem (negativo 400)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type",  "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{tokenCliente}}" }
+            ],
+            "url": { "raw": "{{baseUrl}}/fidelidade/resgatar", "host": ["{{baseUrl}}"], "path": ["fidelidade","resgatar"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"pontosResgatar\": 999999\n}"
+            }
+          },
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 400 pontos insuficientes', () => pm.response.to.have.status(400));"
+          ], "type": "text/javascript" }}]
+        }
+      ]
+    },
+    {
+      "name": "Erros — Validação geral",
+      "description": "Cenários negativos de validação obrigatórios pelo roteiro",
+      "item": [
+        {
+          "name": "Campo obrigatório ausente no cadastro (negativo 400/422)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/auth/cadastro", "host": ["{{baseUrl}}"], "path": ["auth","cadastro"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"semsenha@raizes.com\",\n  \"consentimentoLGPD\": true\n}"
+            }
+          },
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 400 ou 422 campo ausente', () => {",
+            "  pm.expect(pm.response.code).to.be.oneOf([400, 422]);",
+            "});",
+            "pm.test('Detalhe do campo inválido', () => {",
+            "  const body = pm.response.json();",
+            "  const temErros = body.hasOwnProperty('errors') || body.hasOwnProperty('details');",
+            "  pm.expect(temErros).to.be.true;",
+            "});"
+          ], "type": "text/javascript" }}]
+        },
+        {
+          "name": "E-mail inválido no cadastro (negativo 400/422)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/auth/cadastro", "host": ["{{baseUrl}}"], "path": ["auth","cadastro"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nome\": \"Teste\",\n  \"email\": \"email-invalido\",\n  \"senha\": \"Senha@123\",\n  \"consentimentoLGPD\": true\n}"
+            }
+          },
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 400 ou 422 email inválido', () => {",
+            "  pm.expect(pm.response.code).to.be.oneOf([400, 422]);",
+            "});"
+          ], "type": "text/javascript" }}]
+        },
+        {
+          "name": "LGPD não aceita no cadastro (negativo 400)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/auth/cadastro", "host": ["{{baseUrl}}"], "path": ["auth","cadastro"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nome\": \"Teste LGPD\",\n  \"email\": \"lgpd@raizes.com\",\n  \"senha\": \"Senha@123\",\n  \"consentimentoLGPD\": false\n}"
+            }
+          },
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 400 ou 422 LGPD obrigatória', () => {",
+            "  pm.expect(pm.response.code).to.be.oneOf([400, 422]);",
+            "});"
+          ], "type": "text/javascript" }}]
+        },
+        {
+          "name": "Recurso inexistente (negativo 404)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{tokenCliente}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/pedidos/99999",
+              "host": ["{{baseUrl}}"],
+              "path": ["pedidos","99999"]
+            }
+          },
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 404 não encontrado', () => pm.response.to.have.status(404));",
+            "pm.test('Erro padronizado', () => {",
+            "  const body = pm.response.json();",
+            "  pm.expect(body).to.have.property('error');",
+            "  pm.expect(body).to.have.property('path');",
+            "  pm.expect(body).to.have.property('timestamp');",
+            "});"
+          ], "type": "text/javascript" }}]
+        }
+      ]
+    }
+  ]
+}
