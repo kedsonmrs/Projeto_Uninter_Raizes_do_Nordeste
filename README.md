@@ -98,14 +98,14 @@ Contém:
 ### HTTPS
 
 bash
-git clone https://github.com/seu-usuario/RaizesDoNordeste.git
+git clone https://github.com/kedsonmrs/RaizesDoNordeste.git
 cd RaizesDoNordeste
 
 
 ### SSH
 
 bash
-git clone git@github.com:seu-usuario/RaizesDoNordeste.git
+git clone git@github.com:kedsonmrs/RaizesDoNordeste.git
 cd RaizesDoNordeste
 
 
